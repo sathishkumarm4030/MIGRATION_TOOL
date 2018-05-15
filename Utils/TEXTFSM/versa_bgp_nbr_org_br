@@ -1,0 +1,62 @@
+admin@ABC-cpe26-cli> show bgp neighbor org ABC brief | nomore
+
+brief ABC-Control-VR
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+10.12.64.1      20:53:36   Established      43          13      38551        179
+10.12.64.2      20:53:05   Established      31          13      46350        179
+brief INT-WAN-Transport-VR
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.3     4d00h26m   Established       1          10        179      35213
+169.254.0.5     4d00h26m   Established       1          10        179      56873
+169.254.0.7     4d00h26m   Established       1          10        179      34590
+169.254.0.9     4d00h26m   Established       1          10        179      42845
+169.254.0.11    4d00h26m   Established       1          10        179      42503
+169.254.0.13    4d00h26m   Established       1          10        179      55617
+169.254.0.15    4d00h26m   Established       1          10        179      40708
+169.254.0.17    4d00h26m   Established       1          10        179      50118
+169.254.0.19    4d00h26m   Established       1          10        179      49987
+169.254.0.21    4d00h26m   Established       1          10        179      39479
+brief LAN1-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.2     4d00h26m   Established       1           1      35213        179
+brief LAN2-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.4     4d00h26m   Established       1           1      56873        179
+brief LAN3-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.6     4d00h26m   Established       1           1      34590        179
+brief LAN4-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.8     4d00h26m   Established       1           1      42845        179
+brief LAN5-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.10    4d00h26m   Established       1           1      42503        179
+brief LAN6-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.12    4d00h26m   Established       1           1      55617        179
+brief LAN7-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.14    4d00h26m   Established       1           1      40708        179
+brief LAN8-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.16    4d00h26m   Established       1           1      50118        179
+brief LAN9-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.18    4d00h26m   Established       1           1      49987        179
+brief LAN10-VRF
+
+Neighbor        Uptime       State       PfxRcd      PfxSent   local-port  remote-port
+169.254.0.20    4d00h26m   Established       1           1      39479        179
+[ok][2018-05-08 12:56:49]
+admin@ABC-cpe26-cli>

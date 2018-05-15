@@ -1,0 +1,18 @@
+Value Filldown routing_instance (\S+)
+Value Neighbor (\d+\.\d+\.\d+\.\d+)
+#Value Uptime (\S+)
+Value State (\S+)
+#Value PfxRcd (\S+)
+#Value PfxSent (\S+)
+#Value localport (\S+)
+#Value remoteport (\S+)
+
+
+Start
+  ^routing-instance: ${routing_instance}
+  ^brief ${routing_instance}
+  #^${Neighbor}\s+${Uptime}\s+${State}\s+${PfxRcd}\s+${PfxSent}\s+${localport}\s+${remoteport} -> Record
+  ^${Neighbor}\s+\S+\s+${State}\s+\S+\s+\S+\s+\S+\s+\S+ -> Record
+
+
+EOF

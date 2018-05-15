@@ -1,0 +1,12 @@
+device_name_in_vd,day,batch,type,ip,username,password,port,org,package_name,upgrade_type,package_info
+ABC-cpe29,2,3,versa,10.12.64.117,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe27,2,4,versa,10.12.64.117,admin,versa123,22,ABC,flexvnf-16.1R1S1-sathish2,deb-package-upgrade,versa-flexvnf-20171013-152148-7774a5a-16.1R1-wsm
+ABC-cpe26,3,3,versa,10.12.64.116,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe28,1,1,versa,10.12.64.116,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe29,2,5,versa,10.12.64.117,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe26,1,2,versa,10.12.64.116,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe27,1,2,versa,10.12.64.117,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe35,3,3,versa,10.12.64.117,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+ABC-cpe36,3,3,versa,10.12.64.117,admin,versa123,22,ABC,felxvnf-16.1R1S3-sathish,deb-package-upgrade,versa-flexvnf-20171107-024119-e51d9e9-16.1R1-wsm
+CPE-8,4,1,versa,20.20.15.8,admin,versa123,22,IPC00011,FlexVNF-16.1R2S2.2-wsm,deb-package-upgrade,versa-flexvnf-20180508-110517-d1653f6-16.1R2S2.2-wsm
+ABC-cpe26,5,5,versa,10.12.64.116,admin,versa123,22,ABC,flexvnf-16.1R1S1-sathish2,deb-package-upgrade,versa-flexvnf-20171013-152148-7774a5a-16.1R1-wsm
