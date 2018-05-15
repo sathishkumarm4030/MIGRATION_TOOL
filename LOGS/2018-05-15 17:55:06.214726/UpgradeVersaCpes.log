@@ -1,0 +1,12 @@
+2018-05-15 17:55:06,215 - Main - INFO - SCRIPT Started
+2018-05-15 17:55:06,215 - Main - INFO - BELOW ARE THE CPEs going for Upgrade:
+2018-05-15 17:55:06,216 - Main - INFO - CPE-8
+2018-05-15 17:55:39,938 - Main - INFO - ====================================================================================================
+2018-05-15 17:55:39,938 - Main - INFO - cpe:CPE-8
+2018-05-15 17:55:39,938 - Main - INFO - upgrade:VD --> CPE Request ping failed.
+2018-05-15 17:55:39,938 - Main - INFO - ====================================================================================================
+2018-05-15 17:55:39,938 - Main - INFO - SCRIPT Completed.
+2018-05-15 17:55:39,938 - Main - INFO - Result Stored in /home/sathish123/PycharmProjects/UpgradeVersaCpe/LOGS/2018-05-15 17:55:06.214726//RESULT.csv
+2018-05-15 17:55:39,939 - Main - INFO - LOG FILES Path: /home/sathish123/PycharmProjects/UpgradeVersaCpe/LOGS/2018-05-15 17:55:06.214726/
+2018-05-15 17:55:39,939 - Main - INFO - Time elapsed: 0:00:33.723622
+
