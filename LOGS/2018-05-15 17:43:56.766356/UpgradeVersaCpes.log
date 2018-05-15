@@ -1,0 +1,12 @@
+2018-05-15 17:43:56,766 - Main - INFO - SCRIPT Started
+2018-05-15 17:43:56,767 - Main - INFO - BELOW ARE THE CPEs going for Upgrade:
+2018-05-15 17:43:56,769 - Main - INFO - CPE-8
+2018-05-15 17:44:46,200 - Main - INFO - ====================================================================================================
+2018-05-15 17:44:46,201 - Main - INFO - cpe:CPE-8
+2018-05-15 17:44:46,201 - Main - INFO - upgrade:device already running with same package
+2018-05-15 17:44:46,201 - Main - INFO - ====================================================================================================
+2018-05-15 17:44:46,201 - Main - INFO - SCRIPT Completed.
+2018-05-15 17:44:46,201 - Main - INFO - Result Stored in /home/sathish123/PycharmProjects/UpgradeVersaCpe/LOGS/2018-05-15 17:43:56.766356//RESULT.csv
+2018-05-15 17:44:46,201 - Main - INFO - LOG FILES Path: /home/sathish123/PycharmProjects/UpgradeVersaCpe/LOGS/2018-05-15 17:43:56.766356/
+2018-05-15 17:44:46,201 - Main - INFO - Time elapsed: 0:00:49.434558
+

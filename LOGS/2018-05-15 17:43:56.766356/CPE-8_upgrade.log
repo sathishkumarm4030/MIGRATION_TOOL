@@ -1,0 +1,3 @@
+2018-05-15 17:44:09,502 - CPE-8 - INFO - before_upgrade Actions for : CPE-8
+2018-05-15 17:44:11,511 - CPE-8 - INFO - CPE-8 is in sync with VD & able to ping & connect
+2018-05-15 17:44:36,382 - CPE-8 - INFO - CPE-8 : device already running with same package
