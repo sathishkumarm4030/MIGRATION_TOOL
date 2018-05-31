@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 This Tool is designed for upgrading Versa CPE.
 """

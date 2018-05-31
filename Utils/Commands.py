@@ -19,13 +19,17 @@ urllib3.disable_warnings()
 report = []
 parsed_dict = {}
 cpe_logger = ""
+cpe_logger_dict ={}
+
+currtime = str(datetime.now())
+currtime =  currtime.replace(" ", "_").replace(":", "_").replace("-", "_").replace(".", "_")
 
 if __name__ == "__main__":
     fileDir = os.path.dirname(os.path.dirname(os.path.realpath('__file__')))
 else:
     fileDir = os.path.dirname(os.path.realpath('__file__'))
 
-logfile_dir = fileDir + "/LOGS/" + str(datetime.now()) + "/"
+logfile_dir = fileDir + "/LOGS/" + currtime + "/"
 if not os.path.exists(os.path.dirname(logfile_dir)):
     try:
         os.mkdir(os.path.dirname(logfile_dir))
@@ -42,75 +46,88 @@ logging.getLogger('').addHandler(console)
 
 
 def setup_logger(name, filename, level=logging.INFO, state = "MAIN"):
-    if state != "after_upgrade":
-        log_file = logfile_dir + filename  + ".log"
-        handler = logging.FileHandler(log_file)
-        handler.setFormatter(formatter)
-        logger = logging.getLogger(name)
-        logger.setLevel(level)
-        logger.addHandler(handler)
-    else:
-        print "already have logger"
+    log_file = logfile_dir + filename  + ".log"
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
     logger = logging.getLogger(name)
     return logger
 
 main_logger = setup_logger('Main', 'UpgradeVersaCpes')
 
 
-
 def do_checks(state = "before_upgrade"):
-    global report, cpe_list, cpe_logger
+    global report, cpe_list, cpe_logger,cpe_logger_dict
     netconnect = make_connection(vd_ssh_dict)
     for i, rows in cpe_list.iterrows():
         cpe_name = cpe_list.ix[i, 'device_name_in_vd']
-        cpe_logger = setup_logger(cpe_name, cpe_name + "_upgrade", state = state)
-        cpe_logger.info(state + " Actions for : " + cpe_name)
-        check_status = check_device_status(netconnect, cpe_name, state)
+        cpe_ip = cpe_list.ix[i, 'ip']
+        if state == "before_upgrade":
+            cpe_logger = setup_logger(cpe_name, cpe_name + "_upgrade", state = state)
+            cpe_logger_dict[cpe_name] = cpe_logger
+        else:
+            cpe_logger = cpe_logger_dict[cpe_name]
+        main_logger.info("<>" * 50)
+        main_logger.info(state + " Actions for : " + cpe_name)
+        main_logger.info("<>" * 50)
+        check_status = check_device_status(netconnect, cpe_name, cpe_ip, state)
         if check_status != "PASS":
-            cpe_logger.info(check_status)
+            main_logger.info(check_status)
             cpe_result = [cpe_name, check_status]
             report.append(cpe_result)
             cpe_list = cpe_list.drop(index=i)
             continue
         else:
-            cpe_logger.info(cpe_name + " is in sync with VD & able to ping & connect")
+            main_logger.info(cpe_name + " is in sync with VD & able to ping & connect")
     close_connection(netconnect)
 
 
 def do_cross_connection(vd_ssh_dict, dev_dict):
+    global cpe_logger
     netconnect = make_connection(vd_ssh_dict)
     netconnect.write_channel("ssh " + dev_dict["username"] + "@" + dev_dict["ip"] + "\n")
     time.sleep(5)
     output = netconnect.read_channel()
-    print output
+    main_logger.info(output)
     if 'assword:' in output:
         netconnect.write_channel(dev_dict["password"] + "\n")
+        output = netconnect.read_channel()
+        main_logger.info(output)
     elif 'yes' in output:
         print "am in yes condition"
         netconnect.write_channel("yes\n")
+        output = netconnect.read_channel()
+        main_logger.info(output)
         time.sleep(1)
         netconnect.write_channel(dev_dict["password"] + "\n")
+        output = netconnect.read_channel()
+        main_logger.info(output)
     else:
-        print "output"
-        print "check reachabilty to " + dev_dict["ip"]
+        # cpe_logger.info(output)
+        return "VD to CPE " + dev_dict["ip"] + "ssh Failed."
     netconnect.write_channel("cli\n")
     output1 = netconnect.read_channel()
-    print output1
+    main_logger.info(output1)
     time.sleep(2)
     try:
+        main_logger.info("doing redispatch")
         redispatch(netconnect, device_type='versa')
-    except ValueError:
-        main_logger.info("Not able to enter into CPE CLI. please check")
+    except ValueError as Va:
+        main_logger.info(Va)
+        main_logger.info("Not able to get router prompt from CPE" + dev_dict["ip"] + " CLI. please check")
+        return "Redispatch not Success"
     time.sleep(2)
     return netconnect
 
 
 def take_device_states(state = "before_upgrade"):
-    global report, cpe_list, parsed_dict, cpe_logger
+    global report, cpe_list, parsed_dict, cpe_logger, cpe_logger_dict
     for i, rows in cpe_list.iterrows():
         dev_dict = {
             "device_type": 'versa', "ip": cpe_list.ix[i, 'ip'], \
-            "username": 'admin', "password": 'versa123', \
+            "username": vd_dict['cpe_user'], "password": vd_dict['cpe_passwd'], \
             "port": '22'
         }
         # dev_dict = {
@@ -118,8 +135,22 @@ def take_device_states(state = "before_upgrade"):
         #     "username": cpe_list.ix[i, 'username'], "password": cpe_list.ix[i, 'password'], \
         #     "port": cpe_list.ix[i, 'port']
         # }
-        netconnect = do_cross_connection(vd_ssh_dict, dev_dict)
         cpe_name = cpe_list.ix[i, 'device_name_in_vd']
+        cpe_logger = cpe_logger_dict[cpe_name]
+        netconnect = do_cross_connection(vd_ssh_dict, dev_dict)
+        if netconnect == "VD to CPE " + dev_dict["ip"] + "ssh Failed.":
+                cpe_result = [cpe_name, "VD -> CPE " + dev_dict["ip"] + " SSH connection failed"]
+                report.append(cpe_result)
+                cpe_list = cpe_list.drop(index=i)
+                cpe_logger.info(cpe_name + " : VD -> CPE " + dev_dict["ip"] + " SSH connection failed. please check IP & reachabilty from VD")
+                continue
+        if netconnect == "Redispatch not Success":
+                cpe_result = [cpe_name, "CPE Redispatch failed"]
+                report.append(cpe_result)
+                cpe_list = cpe_list.drop(index=i)
+                cpe_logger.info(cpe_name + " : CPE Redispatch Success")
+                continue
+
         org = cpe_list.ix[i, 'org']
         pack_info = get_package_info(netconnect)
         if state == "before_upgrade":
@@ -150,12 +181,13 @@ def take_device_states(state = "before_upgrade"):
 
 def parse_send_command(netconnect, cmd, parse_template):
     global cpe_logger
-    result = netconnect.send_command_expect(cmd)
-    cpe_logger.info(result)
+    cpe_logger.info("CMD>> : " + cmd)
+    output = netconnect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    cpe_logger.info(output)
     time.sleep(1)
     template = open(parse_template)
     re_table = textfsm.TextFSM(template)
-    fsm_results =  re_table.ParseText(result.encode("utf-8"))
+    fsm_results =  re_table.ParseText(output.encode("utf-8"))
     fsm_result_str = ""
     fsm_result_str+= "     ".join(re_table.header) + "\n"
     for row in fsm_results:
@@ -166,6 +198,9 @@ def parse_send_command(netconnect, cmd, parse_template):
 def do_rest_upgrade():
     global report, cpe_list, cpe_logger
     task_list = []
+    main_logger.info("CPE's LIST for Upgrade")
+    for i, rows in cpe_list.iterrows():
+        main_logger.info(cpe_list.ix[i, 'device_name_in_vd'])
     for i, rows in cpe_list.iterrows():
         body_params = {
             'PACKAGE_NAME': cpe_list.ix[i, 'package_name'],
@@ -174,8 +209,8 @@ def do_rest_upgrade():
         body = config_template(t1.body_temp, body_params)
         json_data = json.loads(body)
         task_list.append(rest_operation(vdurl, user, passwd, json_data))
-        cpe_logger.info("TASK LISTS : ")
-        cpe_logger.info(task_list)
+        main_logger.info("TASK LISTS : ")
+        main_logger.info(task_list)
     while task_list:
         for task_id in task_list:
             task_state = check_task_status(vdurl, user, passwd, task_id)
@@ -191,7 +226,7 @@ def rest_operation(vd, user, passwd, json_data):
                              json=json_data,
                              verify=False)
 
-    cpe_logger.info(response.text)
+    main_logger.info(response.text)
     print response.text
     data = response.json()
     taskid = str(data['output']['result']['task']['task-id'])
@@ -199,7 +234,7 @@ def rest_operation(vd, user, passwd, json_data):
 
 
 def check_task_status(vd, user, passwd, taskid):
-    global cpe_logger
+    global cpe_logger, cpe_logger_dict
     # cpe_logger.info(taskid)
     # percent_completed = 0
     # while percent_completed < 100:
@@ -208,10 +243,10 @@ def check_task_status(vd, user, passwd, taskid):
                              headers=headers3,
                              verify=False)
     data1 = response1.json()
-    cpe_logger.info(data1)
+    main_logger.info(data1)
     percent_completed = data1['versa-tasks.task']['versa-tasks.percentage-completion']
-    cpe_logger.info(percent_completed)
-    cpe_logger.info("Sleeping for 5 seconds")
+    main_logger.info(percent_completed)
+    main_logger.info("Sleeping for 5 seconds")
     time.sleep(5)
     # return data1['task']['task-status']
     return str(percent_completed)
@@ -227,6 +262,9 @@ def PreUpgradeActions():
 
 
 def UpgradeAction():
+    main_logger.info("<>" * 50)
+    main_logger.info("UPGRADE CPEs via REST ")
+    main_logger.info("<>" * 50)
     do_rest_upgrade()
 
 def PostUpgradeActions():
@@ -237,11 +275,12 @@ def PostUpgradeActions():
 
 
 def compare_states():
-    global report, cpe_list, parsed_dict, cpe_logger, main_logger
+    global report, cpe_list, parsed_dict, cpe_logger, main_logger, cpe_logger_dict
     for i, rows in cpe_list.iterrows():
         cpe_name = cpe_list.ix[i, 'device_name_in_vd']
         beforeupgrade = parsed_dict[cpe_name + "before_upgrade"]
         afterupgrade = parsed_dict[cpe_name + "after_upgrade"]
+
         upgrade = check_parse(cpe_name, "package", cpe_list.ix[i, 'package_info'], afterupgrade['packageinfo'])
         if upgrade == "OK":
             upgrade = "Success - " + beforeupgrade['packageinfo'] + " to " + cpe_list.ix[i, 'package_info']
@@ -344,59 +383,69 @@ def config_template(text, params1):
 
 
 def make_connection(a_device):
+    global main_logger
     try:
         net_connect = ConnectHandler(**a_device)
-    except ValueError:
+        output = net_connect.read_channel()
+        main_logger.info(output)
+    except ValueError as Va:
+        main_logger.info(Va)
         main_logger.info("Not able to enter Versa Director CLI. please Check")
         exit()
     net_connect.enable()
-    print net_connect
     time.sleep(5)
-    print "{}: {}".format(net_connect.device_type, net_connect.find_prompt())
-    print str(net_connect) + " connection opened"
-    logging.debug(str(net_connect) + " connection opened")
+    main_logger.info("{}: {}".format(net_connect.device_type, net_connect.find_prompt()))
+    # print str(net_connect) + " connection opened"
+    main_logger.info(str(net_connect) + " connection opened")
     return net_connect
 
 
 def close_cross_connection(nc):
     time.sleep(1)
-    nc.write_channel("exit\n")
+    main_logger.info(nc.write_channel("exit\n"))
     time.sleep(1)
-    nc.write_channel("exit\n")
+    main_logger.info(nc.write_channel("exit\n"))
     time.sleep(1)
     redispatch(nc, device_type='versa')
-    print nc.find_prompt()
+    main_logger.info(nc.find_prompt())
+
 
 
 def request_ping(net_connect, cpe):
     cmd = "request devices device " + cpe + " ping"
-    output = net_connect.send_command_expect(cmd)
-    print output
+    main_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    main_logger.info(output)
     return str(" 0% packet loss" in output)
 
 
 def request_connect(net_connect, cpe):
     cmd = "request devices device " + cpe + " connect"
-    output = net_connect.send_command_expect(cmd)
-    print output
+    main_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    main_logger.info(output)
     return str(" Connected to" in output)
 
 
 def request_live_status(net_connect, cpe):
     cmd = "request devices device " + cpe + " check-sync"
-    output = net_connect.send_command_expect(cmd)
-    print output
+    main_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    main_logger.info(output)
     return str("result in-sync" in output)
 
 
 def request_sync_from_cpe(net_connect, cpe):
     cmd = "request devices device " + cpe + " sync-from"
-    output = net_connect.send_command_expect(cmd)
-    print output
+    main_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    main_logger.info(output)
     return str(" result true" in output)
 
 
-def check_device_status(nc, device_name, state):
+def check_device_status(nc, device_name, device_ip, state):
+    # if ping(nc, device_ip) != "True":
+    #     return "VD --> CPE " + device_ip + " ping failed."
     if request_ping(nc, device_name) == "True":
         if request_connect(nc, device_name) == "True":
             if request_live_status(nc, device_name) == "True":
@@ -421,7 +470,7 @@ def remove_last_line_from_string(s):
 
 
 def check_parse(cpe, outputof, before_upgrade , after_upgrade):
-    global cpe_logger
+    global cpe_logger, cpe_logger_dict
     check_result = "OK"
     deleted = ""
     added = ""
@@ -437,16 +486,24 @@ def check_parse(cpe, outputof, before_upgrade , after_upgrade):
                     added += i + "\n"
                     check_result = "NOK"
         if deleted != "":
-            cpe_logger.info("After Upgrade deleted Lines")
-            cpe_logger.info(deleted)
+            cpe_logger.info("==" * 50)
+            cpe_logger.info("After Upgrade deleted Lines in config")
+            cpe_logger.info("==" * 50)
+            cpe_logger.info("\n" + deleted)
+            cpe_logger.info("==" * 50)
 
         if added != "":
-            cpe_logger.info("After Upgrade added Lines")
-            cpe_logger.info(added)
+            cpe_logger.info("==" * 50)
+            cpe_logger.info("After Upgrade added Lines in config")
+            cpe_logger.info("==" * 50)
+            cpe_logger.info("\n" + added)
+            cpe_logger.info("==" * 50)
     elif outputof == "package":
         if before_upgrade != after_upgrade:
+            cpe_logger.info("==" * 50)
             cpe_logger.info("Cpe current package after upgrade: " + after_upgrade)
             cpe_logger.info("Cpe not upgrade to " + before_upgrade)
+            cpe_logger.info("==" * 50)
             check_result = "NOK"
     else:
         if before_upgrade != after_upgrade:
@@ -454,16 +511,22 @@ def check_parse(cpe, outputof, before_upgrade , after_upgrade):
                 if j not in after_upgrade:
                     not_matched += j + "\n"
                     check_result = "NOK"
-            cpe_logger.info(outputof + " not matched after upgrade")
-            cpe_logger.info(not_matched)
+            if not_matched != "":
+                cpe_logger.info("==" * 50)
+                cpe_logger.info(outputof + " not matched after upgrade")
+                cpe_logger.info("==" * 50)
+                cpe_logger.info("\n" + not_matched)
+                cpe_logger.info("==" * 50)
+    # cpe_logger.info("<>" * 50)
+    # cpe_logger.info("Post Upgrade Check Done.")
+    # cpe_logger.info("<>" * 50)
     return check_result
 
 
 
 def close_connection(net_connect):
     net_connect.disconnect()
-    print str(net_connect) + " connection closed"
-    logging.debug(str(net_connect) + " connection closed")
+    main_logger.info(str(net_connect) + " connection closed")
 
 
 def ping(net_connect, dest_ip, **kwargs):
@@ -473,40 +536,51 @@ def ping(net_connect, dest_ip, **kwargs):
     for element in paramlist:
         if element in kwargs.keys():
             cmd =  cmd + " " + element.replace('_', '-') + " "+ str(kwargs[element])
-    print cmd
-    output = net_connect.send_command_expect(cmd)
-    print output
+    try:
+        main_logger.info("CMD>> : " + cmd)
+        output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    except IOError as Io:
+        cpe_logger.info(Io)
+        net_connect.send_command_expect("\x03", strip_prompt=False, strip_command=False)
+        cpe_logger.info("Ping failed")
+        return "Ping failed"
+    main_logger.info(output)
     return str(" 0% packet loss" in output)
 
 
 def get_snapshot(net_connect, desc):
+    global cpe_logger
     cmd = "show system snapshots | tab | match " + desc
-    output = net_connect.send_command_expect(cmd)
-    logging.debug(output)
-    return output.split()[0]
+    cpe_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    cpe_logger.info(output)
+    output1 = output.split("\n")
+    return str(output1[1].split()[0])
 
 
 def take_snapshot(net_connect, desc):
+    global cpe_logger
     cmd = "request system create-snapshot description " + str(desc) + " no-confirm"
-    print cmd
-    output = net_connect.send_command_expect(cmd)
-    logging.debug(output)
-    print output
+    cpe_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    cpe_logger.info(output)
     return get_snapshot(net_connect, desc)
 
 
 def rollback_snapshot(net_connect, snapshot_timestamp):
+    global cpe_logger
     cmd = "request system rollback to " + snapshot_timestamp + " no-confirm"
-    output = net_connect.send_command_expect(cmd)
+    cpe_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
     print output
 
 
 def get_interface_status(net_connect, intf_name):
     """Get interface status. Return LAN VRF name and subnet"""
     cmd = 'show interfaces brief ' + str(intf_name) + ' | tab'
-    print cmd
-    output = net_connect.send_command_expect(cmd)
-    logging.debug(output)
+    main_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    main_logger.info(output)
     output_string = str(output)
     print output_string
     output_list = output_string.split("\n")
@@ -519,14 +593,16 @@ def get_interface_status(net_connect, intf_name):
 
 
 def get_package_info(net_connect):
+    global cpe_logger
     cmd = 'show system package-info | tab'
-    output = net_connect.send_command_expect(cmd)
-    logging.debug(output)
+    cpe_logger.info("CMD>> : " + cmd)
+    output = net_connect.send_command_expect(cmd, strip_prompt=False, strip_command=False)
+    cpe_logger.info(output)
     output_string = str(output)
     print output_string
     output_list = output_string.split("\n")
     intf_dict = {}
-    values = output_list[3].split()
+    values = output_list[4].split()
     intf_dict['PACKAGE_ID'] = values[0]
     intf_dict['MAJOR'] = values[1]
     intf_dict['MINOR'] = values[2]
@@ -536,7 +612,6 @@ def get_package_info(net_connect):
     intf_dict['BUILD_TYPE'] = values[6]
     intf_dict['BRANCH'] = values[7]
     return intf_dict
-
 
 def convert_string_dict(output_str):
     output_string = str(output_str)

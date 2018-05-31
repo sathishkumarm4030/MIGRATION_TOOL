@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import getpass
 
 cpe_list = ""
 
@@ -32,9 +33,15 @@ def get_vd_details():
     global cpe_list
     ip = raw_input("Enter Versa Director IP address:\n")
     print "Versa director IP:" + ip
-    user = raw_input("Enter Versa Director Username:\n")
-    print "Versa director IP:" + user
-    passwd = raw_input("Enter Versa Director Password:\n")
+    ldap_user = raw_input("Enter LDAP Username for making SSH connection to VD:\n")
+    print "Versa director Username:" + ldap_user
+    ldap_passwd = getpass.getpass("Enter LDAP Password:\n")
+    user = raw_input("Enter Username for making REST actions to Versa Director :\n")
+    print "Versa director Username:" + user
+    passwd = getpass.getpass("Enter REST Password:\n")
+    cpe_user = raw_input("Enter Versa CPE Username:\n")
+    print "Versa director Username:" + cpe_user
+    cpe_passwd = getpass.getpass("Enter Versa CPE Password:\n")
     day = int(raw_input("Enter DAY:\n"))
     batch = int(raw_input("Enter BATCH:\n"))
     # ip = '10.91.127.194'
@@ -47,7 +54,8 @@ def get_vd_details():
         day = int(raw_input("Please reenter correct DAY:\n"))
         batch = int(raw_input("Please reenter correct Batch:\n"))
         cpe_list = read_csv_file(cpe_details, day, batch)
-    return {'ip' : ip, 'user': user, 'passwd': passwd}
+    return {'ip' : ip, 'user': user, 'passwd': passwd, 'ldap_user' : ldap_user,
+                  'ldap_passwd' : ldap_passwd, 'cpe_user' : cpe_user, 'cpe_passwd' : cpe_passwd}
 
 
 
@@ -67,8 +75,8 @@ passwd = vd_dict['passwd']
 vd_ssh_dict = {
     'device_type': 'versa',
     'ip': vd_dict['ip'],
-    'username': 'admin',
-    'password': 'versa123',
+    'username': vd_dict['ldap_user'],
+    'password': vd_dict['ldap_passwd'],
     'port': 22,
 }
 
